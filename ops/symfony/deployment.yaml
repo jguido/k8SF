@@ -1,0 +1,39 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: symfony
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: symfony
+    spec:
+      containers:
+      - name: nginx
+        image: jguido/nginx
+        ports:
+        - containerPort: 80
+        - containerPort: 443
+        volumeMounts:
+        - mountPath: /var/www/application
+          name: workdir
+        env:
+        - name: MYSQL_USER
+          value: root
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: secrets
+              key: mysql_root_password
+        - name: MYSQL_HOST
+          value: mysql.default.svc.cluster.local
+      - name: php
+        image: jguido/fpm
+        volumeMounts:
+        - mountPath: /var/www/application
+          name: workdir
+      volumes:
+      - name: workdir
+        persistentVolumeClaim:
+          claimName: pvc-webroot

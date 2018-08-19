@@ -1,0 +1,29 @@
+server {
+    listen $NGINX_LISTEN_PORT_HTTP;
+    listen $NGINX_LISTEN_PORT_HTTPS;
+
+    root $NGINX_WEBROOT;
+    server_name ${NGINX_SERVERNAME};
+
+    location / {
+        try_files $uri ${NGINX_TRY_FILES};
+    }
+
+    sendfile off;
+
+    location ~ ^/.+\.php(/|$) {
+        fastcgi_pass ${NGINX_PHP_HOST_AND_PORT};
+        fastcgi_split_path_info ^(.+\.php)(/.*)$;
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        fastcgi_param HTTPS off;
+    }
+
+    # Statics
+        location /(bundles|media) {
+            access_log off;
+            expires 30d;
+
+            try_files $uri @rewriteapp;
+    }
+}
